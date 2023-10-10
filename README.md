@@ -1,0 +1,2 @@
+# Real-Time-Chat-App-With-SignalR
+Build an interactive and engaging real-time chat application using SignalR, a powerful library for adding real-time functionality for web applications.With a SignalR hub class at its core, this project enables seamless, instant messaging with features like real-time message broadcasting and user presence tracking. Perfect for enhancing user communication and collaboration in web applications.

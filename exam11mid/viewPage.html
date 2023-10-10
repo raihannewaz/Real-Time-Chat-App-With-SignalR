@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>SignalR Simple Chat</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style type="text/css">
+        .container {
+            background-color: #f8f9fa;
+            border: thick solid #808080;
+            padding: 20px;
+            margin: 20px auto;
+            max-width: 600px;
+        }
+
+        .file-message {
+            font-size: 14px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center" style="background-color:darkcyan">SignalR ChatApp By Newaz_1271713</div><br />
+        <input type="text" id="inputMsg" class="form-control mb-2" placeholder="Type your message" />
+        <div class="input-group mb-2">
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="fileInput">
+                <label class="custom-file-label" for="fileInput">Choose file (Max 60 KB Allowed)</label>
+            </div>
+        </div>
+        <input type="hidden" id="showName" value="User" />
+        <button id="sendBtn" class="btn btn-primary btn-block">Send</button>
+        <ul id="conversation" class="mt-3"></ul>
+    </div>
+
+    <script src="Scripts/jquery-3.4.1.min.js"></script>
+    <script src="Scripts/jquery.signalR-2.2.2.min.js"></script>
+    <script src="signalr/hubs"></script>
+
+
+    <script type="text/javascript">
+        $(function () {
+
+            $('#showName').val(prompt('Input Username:', ''));
+
+            var chat = $.connection.chatHub;
+
+            chat.client.broadcastMessage = function (name, message) {
+                const userName = $('<div />').text(name).html();
+                const userMsg = $('<div />').text(message).html();
+                $('#conversation').append(`<li><strong>${userName}</strong>:&nbsp;&nbsp;${userMsg}</li>`);
+            };
+
+            chat.client.broadcastFile = function (name, fileName, fileData) {
+                const userName = $('<div />').text(name).html();
+                const content = isImageFile(fileName)
+                    ? `<img src="${fileData}" alt="${fileName}" style="max-width: 300px; max-height: 300px;" />`
+                    : `<a href="${fileData}" download="${fileName}">Download File</a>`;
+                $('#conversation').append(`<li><strong>${userName}</strong></br>;${content}</li>`);
+            }; 
+
+
+            $('#sendBtn').click(() => {
+                const message = $('#inputMsg').val();
+                const file = $('#fileInput').prop('files')[0];
+
+                if (message) {
+                    chat.server.msgSend($('#showName').val(), message);
+                }
+
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        const fileData = event.target.result;
+                        chat.server.fileSend($('#showName').val(), file.name, fileData);
+                    };
+                    reader.readAsDataURL(file);
+                }
+                clearInputs();
+            });
+
+            function isImageFile(fileName) {
+                const imageExtensions = ['jpg', 'jpeg', 'png'];
+                const fileExtension = fileName.split('.').pop().toLowerCase();
+                return imageExtensions.includes(fileExtension);
+            }
+
+            $('#fileInput').on('change', function () {
+                const fileName = $(this).val().split('\\').pop();
+                $(this).next('.custom-file-label').addClass('selected').html(fileName);
+            });
+
+            function clearInputs() {
+                $('#inputMsg').val('');
+                $('#fileInput').val('');
+                $('.custom-file-label').removeClass('selected').html('Choose file (max 60 KB)');
+            }
+
+            $.connection.hub.start().done(() => {
+                $('#inputMsg').focus();
+            });
+        });
+    </script>
+
+</body>
+</html>
